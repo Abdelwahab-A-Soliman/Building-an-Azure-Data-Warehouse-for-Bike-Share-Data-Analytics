@@ -1,0 +1,20 @@
+CREATE TABLE BIKESHARE_DW.STATION_DIM(
+station_id_key int IDENTITY(1,1),
+station_id varchar(100),
+name varchar(100),
+latitude float ,
+longitude float
+)
+
+GO 
+
+
+INSERT INTO BIKESHARE_DW.STATION_DIM (station_id,name,latitude,longitude)
+select TRIM(REPLACE(STAGING.STATION.station_id,'"','' )),TRIM(REPLACE(STAGING.STATION.name,'"','' )),STAGING.STATION.latitude,STAGING.STATION.longitude
+FROM STAGING.STATION
+
+
+GO 
+
+ALTER TABLE BIKESHARE_DW.STATION_DIM
+ADD CONSTRAINT PK_STATION PRIMARY KEY NONCLUSTERED (station_id_key) NOT ENFORCED ;

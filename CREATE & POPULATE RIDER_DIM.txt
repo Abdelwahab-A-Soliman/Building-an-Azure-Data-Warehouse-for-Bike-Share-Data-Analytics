@@ -1,0 +1,23 @@
+CREATE TABLE BIKESHARE_DW.RIDER_DIM(
+rider_id_key int IDENTITY(1,1),
+rider_id INT,
+first varchar(50),
+last varchar(50),
+address varchar(100),
+birthday DATE,
+start_date DATE ,
+end_date DATE,
+member BIT)
+
+GO 
+
+INSERT INTO BIKESHARE_DW.RIDER_DIM (rider_id,first,last,address,birthday,start_date,end_date,member)
+select STAGING.RIDER.rider_id,TRIM(REPLACE(STAGING.RIDER.first,'"','' )),TRIM(REPLACE(STAGING.RIDER.last,'"','' )),
+TRIM(REPLACE(STAGING.RIDER.address,'"','' )),CAST(STAGING.RIDER.birthday as date), CAST(STAGING.RIDER.start_date as date) ,CAST(STAGING.RIDER.end_date as date),
+STAGING.RIDER.member
+FROM STAGING.RIDER;
+
+GO
+
+ALTER TABLE BIKESHARE_DW.RIDER_DIM
+ADD CONSTRAINT PK_RIDER PRIMARY KEY NONCLUSTERED (rider_id_key) NOT ENFORCED ;

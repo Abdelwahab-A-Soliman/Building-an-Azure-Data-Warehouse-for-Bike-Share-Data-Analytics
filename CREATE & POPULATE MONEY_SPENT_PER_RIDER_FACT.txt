@@ -1,0 +1,28 @@
+CREATE TABLE BIKESHARE_DW.MONEY_SPENT_PER_RIDER_FACT
+( rider_id_fact_key int IDENTITY(1,1),
+  rider_id_key int,
+  total_minutes_spent INT,
+  total_amount int ,
+  average_number_of_rides float
+);
+
+WITH T1 as (
+
+SELECT  RIDER.rider_id as rider_id,
+       month(started_at) as month, YEAR(started_at) AS year ,SUM(datediff(minute,started_at,ended_at)) as total_minutes_spent, SUM(PAY.amount) as total_amount ,COUNT(trip_id) as number_rides
+FROM STAGING.TRIP TRIP
+JOIN STAGING.RIDER RIDER ON RIDER.rider_id = TRIP.rider_id
+JOIN STAGING.PAYMENT PAY ON PAY.rider_id = RIDER.rider_id
+GROUP BY  RIDER.rider_id,month(started_at),YEAR(started_at)
+)
+,
+
+R AS (
+SELECT rider_id,rider_id_key FROM BIKESHARE_DW.RIDER_DIM
+ )
+
+INSERT INTO BIKESHARE_DW.MONEY_SPENT_PER_RIDER_FACT(rider_id_key,total_minutes_spent,total_amount,average_number_of_rides)
+SELECT rider_id_key, SUM(total_minutes_spent)  as total_minutes_spent ,SUM(total_amount) as total_amount, AVG(number_rides) as average_number_of_rides
+FROM T1
+JOIN R ON R.rider_id = T1.rider_id
+GROUP by rider_id_key

@@ -1,0 +1,70 @@
+CREATE TABLE BIKESHARE_DW.DATE_DIM_NOHOUR (
+   date_key INT,
+   date DATE,
+   day TINYINT,
+   day_of_week TINYINT,
+   month TINYINT,
+   quarter TINYINT,
+   year INT
+   )
+
+GO
+
+DECLARE @CurrentDate DATE = '2000-01-01'
+DECLARE @EndDate DATE = '2023-12-31'
+
+WHILE @CurrentDate  @EndDate
+BEGIN
+   INSERT INTO BIKESHARE_DW.DATE_DIM_NOHOUR(
+      date_key,
+      date,
+      day,
+      day_of_week,
+      month,
+      quarter,
+      year
+      )
+   SELECT date_key = YEAR(@CurrentDate)  10000 + MONTH(@CurrentDate)  100 + DAY(@CurrentDate),
+      date = @CurrentDate,
+      day = DAY(@CurrentDate),
+      day_of_week = DATEPART(dw, @CurrentDate),
+      month = MONTH(@CurrentDate),
+      quarter = DATEPART(q, @CurrentDate),
+      year = YEAR(@CurrentDate)
+     
+
+   SET @CurrentDate = DATEADD(DD, 1, @CurrentDate)
+END
+
+GO
+
+Create TABLE BIKESHARE_DW.HOURS(hour int)
+
+GO 
+
+DECLARE @CURRENT_HOUR INT = 1
+
+WHILE @CURRENT_HOUR <25
+BEGIN 
+    INSERT INTO  BIKESHARE_DW.HOURS (hour)
+    SELECT hour = @CURRENT_HOUR 
+
+    SET @CURRENT_HOUR = @CURRENT_HOUR + 1
+
+END 
+
+
+GO 
+
+SELECT * INTO BIKESHARE_DW.DATE_DIM FROM BIKESHARE_DW.DATE_DIM_NOHOUR
+CROSS JOIN BIKESHARE_DW.HOURS
+
+GO 
+
+ALTER TABLE BIKESHARE_DW.DATE_DIM
+ALTER COLUMN date_key int not null 
+
+GO
+
+ALTER TABLE BIKESHARE_DW.DATE_DIM
+ADD CONSTRAINT PK_DATE PRIMARY KEY NONCLUSTERED (date_key) NOT ENFORCED ;

@@ -1,0 +1,52 @@
+create table BIKESHARE_DW.TRIP_ANALYSIS_FACT
+(
+    trip_id_key int IDENTITY(1,1),
+    trip_id varchar(100),
+    rideable_type varchar(50),
+    date_key int,
+    rider_id_key int,
+    start_station_key int,
+    end_station_key int ,
+    started_at VARCHAR(100),
+    trip_duration_minutes float,
+    rider_age float
+)
+
+GO 
+
+WITH T AS (
+SELECT TRIM(REPLACE(STAGING.TRIP.trip_id,'"','' )) as trip_id ,TRIM(REPLACE(STAGING.TRIP.rideable_type,'"','' )) as rideable_type,
+datediff(minute,started_at,ended_at) as trip_duration_minutes,started_at, TRIM(REPLACE(STAGING.TRIP.start_station_id,'"','' )) as start_station_id,
+     TRIM(REPLACE(STAGING.TRIP.end_station_id,'"','' )) as end_station_id ,rider_id
+FROM STAGING.TRIP )
+,
+ 
+ D AS (
+SELECT date_key, date FROM BIKESHARE_DW.DATE_DIM
+)
+,
+ R AS (
+SELECT rider_id,rider_id_key,birthday FROM BIKESHARE_DW.RIDER_DIM
+ )
+,
+
+ S AS (
+SELECT station_id_key,station_id FROM BIKESHARE_DW.STATION_DIM
+ )
+,
+ T1 AS (
+SELECT trip_id,rideable_type,trip_duration_minutes,
+    started_at,date_key,S.station_id_key AS start_station_key ,end_station_id,rider_id_key,DATEDIFF(year,birthday,started_at) as rider_age  FROM D
+    join T ON CAST(T.started_at as date) = D.date
+    JOIN R ON R.rider_id = T.rider_id
+    JOIN S ON T.start_station_id = S.station_id )
+
+INSERT INTO BIKESHARE_DW.TRIP_ANALYSIS_FACT(trip_id,rideable_type,trip_duration_minutes,started_at ,date_key,start_station_key,end_station_key, rider_id_key, rider_age)
+SELECT trip_id,rideable_type,trip_duration_minutes,started_at ,date_key,start_station_key,
+       S.station_id_key as end_station_key, rider_id_key, rider_age
+       FROM T1
+       JOIN S ON T1.end_station_id = S.station_id 
+
+
+
+

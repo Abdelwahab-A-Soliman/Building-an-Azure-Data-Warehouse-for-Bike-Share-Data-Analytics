@@ -1,0 +1,14 @@
+CREATE TABLE BIKESHARE_DW.PAYMENT_ANALYSIS_FACT
+(   payment_id_key int IDENTITY(1,1) PRIMARY KEY NONCLUSTERED NOT ENFORCED,
+    payment_id int ,
+    rider_id_key INT,
+    date_key int ,
+    rider_age_at_start float,
+    amount float
+)
+
+GO 
+INSERT INTO BIKESHARE_DW.PAYMENT_ANALYSIS_FACT(payment_id,rider_id_key,date_key,rider_age_at_start,amount)
+SELECT payment_id,R.rider_id_key,D.date_key,DATEDIFF(year,R.birthday,R.start_date) as rider_age_at_start,amount FROM STAGING.PAYMENT P
+JOIN BIKESHARE_DW.RIDER_DIM R ON R.rider_id = P.rider_id
+JOIN BIKESHARE_DW.DATE_DIM D ON D.date = P.date
